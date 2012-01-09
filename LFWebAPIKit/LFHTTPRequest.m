@@ -440,7 +440,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
         return NO;
     }
 
-    CFHTTPMessageRef request = CFHTTPMessageCreateRequest(NULL, (__bridge CFStringRef)methodName, (CFURLRef)url, kCFHTTPVersion1_1);
+    CFHTTPMessageRef request = CFHTTPMessageCreateRequest(NULL, (__bridge CFStringRef)methodName, (__bridge CFURLRef)url, kCFHTTPVersion1_1);
     if (!request) {
         return NO;
     }
