@@ -56,7 +56,7 @@ NSString *OFEscapedURLStringFromNSString(NSString *inStr)
 
 NSString *OFEscapedURLStringFromNSStringWithExtraEscapedChars(NSString *inStr, NSString *inEscChars)
 {
-	CFStringRef escaped = CFURLCreateStringByAddingPercentEscapes(NULL, (CFStringRef)inStr, NULL, (CFStringRef)inEscChars, kCFStringEncodingUTF8);
+	CFStringRef escaped = CFURLCreateStringByAddingPercentEscapes(NULL, (CFStringRef)inStr, NULL, (__bridge CFStringRef)inEscChars, kCFStringEncodingUTF8);
     
 #if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4	
 	return (NSString *)[(NSString*)escaped autorelease];			    

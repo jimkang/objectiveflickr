@@ -234,11 +234,11 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 #if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4
                 _expectedDataLength = [(NSString *)contentLengthString intValue];
 #else
-                if ([(NSString *)contentLengthString respondsToSelector:@selector(integerValue)]) {
-                    _expectedDataLength = [(NSString *)contentLengthString integerValue];
+                if ([(__bridge NSString *)contentLengthString respondsToSelector:@selector(integerValue)]) {
+                    _expectedDataLength = [(__bridge NSString *)contentLengthString integerValue];
                 }
                 else {
-                    _expectedDataLength = [(NSString *)contentLengthString intValue];
+                    _expectedDataLength = [(__bridge NSString *)contentLengthString intValue];
                 }
 #endif
 
@@ -250,7 +250,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
             CFStringRef contentTypeString = CFHTTPMessageCopyHeaderFieldValue(response, CFSTR("Content-Type"));
             if (contentTypeString) {
-                _receivedContentType = [(NSString *)contentTypeString copy];
+                _receivedContentType = [(__bridge NSString *)contentTypeString copy];
                 CFRelease(contentTypeString);
             }
         }
@@ -258,7 +258,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
         CFReadStreamRef presentReadStream = _readStream;
 
         if ([_delegate respondsToSelector:@selector(httpRequest:didReceiveStatusCode:URL:responseHeader:)]) {
-            [_delegate httpRequest:self didReceiveStatusCode:statusCode URL:(NSURL *)finalURL responseHeader:response];
+            [_delegate httpRequest:self didReceiveStatusCode:statusCode URL:(__bridge NSURL *)finalURL responseHeader:response];
         }
 
         if (finalURL) {
@@ -349,11 +349,11 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 	#if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4
 				_expectedDataLength = [(NSString *)contentLengthString intValue];
 	#else
-				if ([(NSString *)contentLengthString respondsToSelector:@selector(integerValue)]) {
-					_expectedDataLength = [(NSString *)contentLengthString integerValue];
+				if ([(__bridge NSString *)contentLengthString respondsToSelector:@selector(integerValue)]) {
+					_expectedDataLength = [(__bridge NSString *)contentLengthString integerValue];
 				}
 				else {
-					_expectedDataLength = [(NSString *)contentLengthString intValue];
+					_expectedDataLength = [(__bridge NSString *)contentLengthString intValue];
 				}
 	#endif
 
@@ -365,13 +365,13 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
 			CFStringRef contentTypeString = CFHTTPMessageCopyHeaderFieldValue(response, CFSTR("Content-Type"));
 			if (contentTypeString) {
-				_receivedContentType = [(NSString *)contentTypeString copy];
+				_receivedContentType = [(__bridge NSString *)contentTypeString copy];
 				CFRelease(contentTypeString);
 			}
 		}
 
 		if ([_delegate respondsToSelector:@selector(httpRequest:didReceiveStatusCode:URL:responseHeader:)]) {
-			[_delegate httpRequest:self didReceiveStatusCode:statusCode URL:(NSURL *)finalURL responseHeader:response];
+			[_delegate httpRequest:self didReceiveStatusCode:statusCode URL:(__bridge NSURL *)finalURL responseHeader:response];
 		}
 
 		if (finalURL) {
@@ -440,7 +440,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
         return NO;
     }
 
-    CFHTTPMessageRef request = CFHTTPMessageCreateRequest(NULL, (CFStringRef)methodName, (CFURLRef)url, kCFHTTPVersion1_1);
+    CFHTTPMessageRef request = CFHTTPMessageCreateRequest(NULL, (__bridge CFStringRef)methodName, (CFURLRef)url, kCFHTTPVersion1_1);
     if (!request) {
         return NO;
     }
@@ -482,13 +482,13 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
     }
 
     if (!inputStream && data) {
-        CFHTTPMessageSetBody(request, (CFDataRef)data);
+        CFHTTPMessageSetBody(request, (__bridge CFDataRef)data);
     }
 
     CFReadStreamRef tmpReadStream;
 
     if (inputStream) {
-        tmpReadStream = CFReadStreamCreateForStreamedHTTPRequest(NULL, request, (CFReadStreamRef)inputStream);
+        tmpReadStream = CFReadStreamCreateForStreamedHTTPRequest(NULL, request, (__bridge CFReadStreamRef)inputStream);
     }
     else {
         tmpReadStream = CFReadStreamCreateForHTTPRequest(NULL, request);
@@ -758,19 +758,19 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
 void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType eventType, void *clientCallBackInfo)
 {
-    id pool = [NSAutoreleasePool new];
-
-    LFHTTPRequest *request = (LFHTTPRequest *)clientCallBackInfo;
-    switch (eventType) {
-        case kCFStreamEventHasBytesAvailable:
-            [request readStreamHasBytesAvailable];
-            break;
-        case kCFStreamEventEndEncountered:
-            [request readStreamEndEncountered];
-            break;
-        case kCFStreamEventErrorOccurred:
-            [request readStreamErrorOccurred];
-            break;
+    @autoreleasepool 
+    {
+        LFHTTPRequest *request = (__bridge LFHTTPRequest *)clientCallBackInfo;
+        switch (eventType) {
+            case kCFStreamEventHasBytesAvailable:
+                [request readStreamHasBytesAvailable];
+                break;
+            case kCFStreamEventEndEncountered:
+                [request readStreamEndEncountered];
+                break;
+            case kCFStreamEventErrorOccurred:
+                [request readStreamErrorOccurred];
+                break;
+        }
     }
-    [pool drain];
 }

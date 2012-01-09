@@ -280,6 +280,6 @@ void LFSiteReachabilityCallback(SCNetworkReachabilityRef inTarget, SCNetworkReac
 	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];	
 	LFSRDebug(@"%s, flags: 0x%08x", __PRETTY_FUNCTION__, inFlags);
 
-	[(LFSiteReachability *)inInfo handleReachabilityCallbackFlags:inFlags];	
+	[(__bridge LFSiteReachability *)inInfo handleReachabilityCallbackFlags:inFlags];	
 	[pool drain];
 }
