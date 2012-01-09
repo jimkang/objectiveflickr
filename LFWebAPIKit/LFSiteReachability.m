@@ -55,10 +55,7 @@ static void LFSiteReachabilityCallback(SCNetworkReachabilityRef inTarget, SCNetw
 
 	[siteRequest setDelegate:nil];
 	[self stopChecking];
-	[siteRequest release];
-	[siteURL release];	
 	
-    [super dealloc];
 }
 
 - (void)finalize
@@ -75,7 +72,7 @@ static void LFSiteReachabilityCallback(SCNetworkReachabilityRef inTarget, SCNetw
 		[siteRequest setDelegate:self];
 		[siteRequest setTimeoutInterval:kDefaultTimeoutInterval];
 		
-		siteURL = [[NSURL URLWithString:kDefaultSite] retain];
+		siteURL = [NSURL URLWithString:kDefaultSite];
 	}
 	
 	return self;
@@ -100,7 +97,6 @@ static void LFSiteReachabilityCallback(SCNetworkReachabilityRef inTarget, SCNetw
 		[timeoutTimer invalidate];
 	}
 	
-	[timeoutTimer release];
 	timeoutTimer = nil;	
 }
 
@@ -186,12 +182,12 @@ static void LFSiteReachabilityCallback(SCNetworkReachabilityRef inTarget, SCNetw
 		createTimeoutTimer = NO;
 	}
 	
-	SCNetworkReachabilityContext context = {0, self, NULL, NULL, NULL};
+	SCNetworkReachabilityContext context = {0, (__bridge void *)(self), NULL, NULL, NULL};
 	SCNetworkReachabilitySetCallback(reachability, LFSiteReachabilityCallback, &context);
 	SCNetworkReachabilityScheduleWithRunLoop(reachability, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
 			
 	if (createTimeoutTimer) {
-		timeoutTimer = [[NSTimer scheduledTimerWithTimeInterval:[siteRequest timeoutInterval] target:self selector:@selector(handleTimeoutTimer:) userInfo:NULL repeats:NO] retain];
+		timeoutTimer = [NSTimer scheduledTimerWithTimeInterval:[siteRequest timeoutInterval] target:self selector:@selector(handleTimeoutTimer:) userInfo:NULL repeats:NO];
 	}
 }
 
@@ -277,9 +273,9 @@ static void LFSiteReachabilityCallback(SCNetworkReachabilityRef inTarget, SCNetw
 
 void LFSiteReachabilityCallback(SCNetworkReachabilityRef inTarget, SCNetworkReachabilityFlags inFlags, void *inInfo)
 {
-	NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];	
-	LFSRDebug(@"%s, flags: 0x%08x", __PRETTY_FUNCTION__, inFlags);
+	@autoreleasepool {	
+		LFSRDebug(@"%s, flags: 0x%08x", __PRETTY_FUNCTION__, inFlags);
 
-	[(__bridge LFSiteReachability *)inInfo handleReachabilityCallbackFlags:inFlags];	
-	[pool drain];
+		[(__bridge LFSiteReachability *)inInfo handleReachabilityCallbackFlags:inFlags];	
+	}
 }

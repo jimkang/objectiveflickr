@@ -56,25 +56,29 @@ NSString *OFEscapedURLStringFromNSString(NSString *inStr)
 
 NSString *OFEscapedURLStringFromNSStringWithExtraEscapedChars(NSString *inStr, NSString *inEscChars)
 {
-	CFStringRef escaped = CFURLCreateStringByAddingPercentEscapes(NULL, (__bridge CFStringRef)inStr, NULL, (__bridge CFStringRef)inEscChars, kCFStringEncodingUTF8);
+	NSString *escaped = (__bridge_transfer NSString *)
+    CFURLCreateStringByAddingPercentEscapes(NULL, (__bridge CFStringRef)inStr, 
+                                            NULL, (__bridge CFStringRef)inEscChars, 
+                                            kCFStringEncodingUTF8);
     
 #if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4	
 	return (NSString *)[(NSString*)escaped autorelease];			    
 #else
-	return (NSString *)[NSMakeCollectable(escaped) autorelease];			    
+	return escaped;
 #endif    
 }
 
 NSString *OFGenerateUUIDString()
 {
     CFUUIDRef uuid = CFUUIDCreate(NULL);
-    CFStringRef uuidStr = CFUUIDCreateString(NULL, uuid);
+    NSString *uuidStr = 
+    (__bridge_transfer NSString *)CFUUIDCreateString(NULL, uuid);
     CFRelease(uuid);
     
 #if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4	
 	return (NSString *)[(NSString*)uuidStr autorelease];			    
 #else
-	return (NSString *)[NSMakeCollectable(uuidStr) autorelease];			    
+	return uuidStr;
 #endif	
 }
 
@@ -139,7 +143,7 @@ NSString *OFHMACSha1Base64(NSString *inKey, NSString *inMessage)
 	size_t outputLength;
 	char *outputBuffer = NewBase64Encode([outerHashedData bytes], [outerHashedData length], true, &outputLength);
 	
-	NSString *result = [[[NSString alloc] initWithBytes:outputBuffer length:outputLength encoding:NSASCIIStringEncoding] autorelease];
+	NSString *result = [[NSString alloc] initWithBytes:outputBuffer length:outputLength encoding:NSASCIIStringEncoding];
 	free(outputBuffer);
 	return result;    
 }
@@ -193,8 +197,8 @@ BOOL OFExtractOAuthCallback(NSURL *inReceivedURL, NSURL *inBaseURL, NSString **o
         return NO;
     }
     
-    *outRequestToken = [[t copy] autorelease];
-    *outVerifier = [[v copy] autorelease];
+    *outRequestToken = [t copy];
+    *outVerifier = [v copy];
     return YES;
 }
 

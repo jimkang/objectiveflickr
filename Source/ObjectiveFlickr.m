@@ -67,23 +67,15 @@ typedef unsigned int NSUInteger;
 #define kDefaultFlickrUploadEndpoint		@"http://api.flickr.com/services/upload/"
 
 @implementation OFFlickrAPIContext
-- (void)dealloc
-{
-    [key release];
-    [sharedSecret release];
-    [authToken release];
-    
-    [RESTAPIEndpoint release];
-	[photoSource release];
-	[photoWebPageSource release];
-	[authEndpoint release];
-    [uploadEndpoint release];
-    
-    [oauthToken release];
-    [oauthTokenSecret release];
-    
-    [super dealloc];
-}
+
+@synthesize authToken;
+@synthesize RESTAPIEndpoint;
+@synthesize photoSource;
+@synthesize authEndpoint;
+@synthesize uploadEndpoint;
+@synthesize oauthToken;
+@synthesize oauthTokenSecret;
+@synthesize photoWebPageSource;
 
 - (id)initWithAPIKey:(NSString *)inKey sharedSecret:(NSString *)inSharedSecret
 {
@@ -100,17 +92,6 @@ typedef unsigned int NSUInteger;
     return self;
 }
 
-- (void)setAuthToken:(NSString *)inAuthToken
-{
-    NSString *tmp = authToken;
-    authToken = [inAuthToken copy];
-    [tmp release];
-}
-
-- (NSString *)authToken
-{
-    return authToken;
-}
 
 - (NSURL *)userAuthorizationURLWithRequestToken:(NSString *)inRequestToken requestedPermission:(NSString *)inPermission
 {
@@ -167,98 +148,6 @@ typedef unsigned int NSUInteger;
     NSDictionary *argDict = [frob length] ? [NSDictionary dictionaryWithObjectsAndKeys:frob, @"frob", inPermission, @"perms", nil] : [NSDictionary dictionaryWithObjectsAndKeys:inPermission, @"perms", nil];
 	NSString *URLString = [NSString stringWithFormat:@"%@?%@", authEndpoint, [self signedQueryFromArguments:argDict]];
 	return [NSURL URLWithString:URLString];
-}
-
-- (void)setRESTAPIEndpoint:(NSString *)inEndpoint
-{
-    NSString *tmp = RESTAPIEndpoint;
-    RESTAPIEndpoint = [inEndpoint copy];
-    [tmp release];
-}
-
-- (NSString *)RESTAPIEndpoint
-{
-    return RESTAPIEndpoint;
-}
-
-- (void)setPhotoSource:(NSString *)inSource
-{
-	if (![inSource hasPrefix:@"http://"]) {
-		return;
-	}
-	
-	NSString *tmp = photoSource;
-	photoSource = [inSource copy];
-	[tmp release];
-}
-
-- (NSString *)photoSource
-{
-	return photoSource;
-}
-
-- (void)setPhotoWebPageSource:(NSString *)inSource
-{
-	if (![inSource hasPrefix:@"http://"]) {
-		return;
-	}
-	
-	NSString *tmp = photoWebPageSource;
-	photoWebPageSource = [inSource copy];
-	[tmp release];
-}
-
-- (NSString *)photoWebPageSource
-{
-	return photoWebPageSource;
-}
-
-- (void)setAuthEndpoint:(NSString *)inEndpoint
-{
-	NSString *tmp = authEndpoint;
-	authEndpoint = [inEndpoint copy];
-	[tmp release];
-}
-
-- (NSString *)authEndpoint
-{
-	return authEndpoint;
-}
-
-- (void)setUploadEndpoint:(NSString *)inEndpoint
-{
-    NSString *tmp = uploadEndpoint;
-    uploadEndpoint = [inEndpoint copy];
-    [tmp release];
-}
-
-- (NSString *)uploadEndpoint
-{
-    return uploadEndpoint;
-}
-
-- (void)setOAuthToken:(NSString *)inToken
-{
-    NSString *tmp = oauthToken;
-    oauthToken = [inToken copy];
-    [tmp release];    
-}
-
-- (NSString *)OAuthToken
-{
-    return oauthToken;
-}
-
-- (void)setOAuthTokenSecret:(NSString *)inSecret;
-{
-    NSString *tmp = oauthTokenSecret;
-    oauthTokenSecret = [inSecret copy];
-    [tmp release];    
-}
-
-- (NSString *)OAuthTokenSecret
-{
-    return oauthTokenSecret;
 }
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4
@@ -377,21 +266,19 @@ typedef unsigned int NSUInteger;
 @end            
 
 @implementation OFFlickrAPIRequest
+
+
 - (void)dealloc
 {
-    [context release];
-    [HTTPRequest release];
-    [sessionInfo release];
     
     [self cleanUpTempFile];
     
-    [super dealloc];
 }
 
 - (id)initWithAPIContext:(OFFlickrAPIContext *)inContext
 {
     if ((self = [super init])) {
-        context = [inContext retain];
+        context = inContext;
         
         HTTPRequest = [[LFHTTPRequest alloc] init];
         [HTTPRequest setDelegate:self];
@@ -417,14 +304,12 @@ typedef unsigned int NSUInteger;
 
 - (id)sessionInfo
 {
-    return [[sessionInfo retain] autorelease];
+    return sessionInfo;
 }
 
 - (void)setSessionInfo:(id)inInfo
 {
-    id tmp = sessionInfo;
-    sessionInfo = [inInfo retain];
-    [tmp release];
+    sessionInfo = inInfo;
 }
 
 - (NSTimeInterval)requestTimeoutInterval
@@ -484,7 +369,7 @@ typedef unsigned int NSUInteger;
 	[newArgs setObject:inMethodName forKey:@"method"];	
 
     NSURL *requestURL = nil;
-    if ([context OAuthToken] && [context OAuthTokenSecret]) {
+    if ([context oauthToken] && [context oauthTokenSecret]) {
         requestURL = [context oauthURLFromBaseURL:[NSURL URLWithString:[context RESTAPIEndpoint]] method:LFHTTPRequestGETMethod arguments:newArgs];
     }
     else {
@@ -534,7 +419,7 @@ static NSData *NSDataFromOAuthPreferredWebForm(NSDictionary *formDictionary)
     
     NSData *postData = nil;
     
-    if ([context OAuthToken] && [context OAuthTokenSecret]) {
+    if ([context oauthToken] && [context oauthTokenSecret]) {
         NSDictionary *signedArgs = [context signedOAuthHTTPQueryArguments:newArgs baseURL:[NSURL URLWithString:[context RESTAPIEndpoint]] method:LFHTTPRequestPOSTMethod];
         
         postData = NSDataFromOAuthPreferredWebForm(signedArgs);
@@ -557,7 +442,7 @@ static NSData *NSDataFromOAuthPreferredWebForm(NSDictionary *formDictionary)
     // get the api_sig
     NSArray *argComponents = nil;
     
-    if ([context OAuthToken] && [context OAuthTokenSecret]) {
+    if ([context oauthToken] && [context oauthTokenSecret]) {
         NSMutableArray *newArgsComps = [NSMutableArray array];
         NSDictionary *signedArgs = [context signedOAuthHTTPQueryArguments:(inArguments ? inArguments : [NSDictionary dictionary]) baseURL:[NSURL URLWithString:[context uploadEndpoint]] method:LFHTTPRequestPOSTMethod];
         
@@ -600,7 +485,7 @@ static NSData *NSDataFromOAuthPreferredWebForm(NSDictionary *formDictionary)
     // now we have everything, create a temp file for this purpose; although UUID is inferior to 
     [self cleanUpTempFile];
 	
-    uploadTempFilename = [[NSTemporaryDirectory() stringByAppendingFormat:@"%@.%@", OFFlickrUploadTempFilenamePrefix, OFGenerateUUIDString()] retain];
+    uploadTempFilename = [NSTemporaryDirectory() stringByAppendingFormat:@"%@.%@", OFFlickrUploadTempFilenamePrefix, OFGenerateUUIDString()];
     
     // create the write stream
     NSOutputStream *outputStream = [NSOutputStream outputStreamToFileAtPath:uploadTempFilename append:NO];
@@ -677,7 +562,7 @@ static NSData *NSDataFromOAuthPreferredWebForm(NSDictionary *formDictionary)
     if ([request sessionInfo] == OFFetchOAuthRequestTokenSession) {
         [request setSessionInfo:nil];
         
-        NSString *response = [[[NSString alloc] initWithData:[request receivedData] encoding:NSUTF8StringEncoding] autorelease];
+        NSString *response = [[NSString alloc] initWithData:[request receivedData] encoding:NSUTF8StringEncoding];
 
         NSDictionary *params = OFExtractURLQueryParameter(response);
         NSString *oat = [params objectForKey:@"oauth_token"];
@@ -696,7 +581,7 @@ static NSData *NSDataFromOAuthPreferredWebForm(NSDictionary *formDictionary)
     else if ([request sessionInfo] == OFFetchOAuthAccessTokenSession) {
         [request setSessionInfo:nil];
 
-        NSString *response = [[[NSString alloc] initWithData:[request receivedData] encoding:NSUTF8StringEncoding] autorelease];
+        NSString *response = [[NSString alloc] initWithData:[request receivedData] encoding:NSUTF8StringEncoding];
         NSDictionary *params = OFExtractURLQueryParameter(response);
         
         NSString *fn = [params objectForKey:@"fullname"];
@@ -794,7 +679,6 @@ static NSData *NSDataFromOAuthPreferredWebForm(NSDictionary *formDictionary)
 			NSAssert(removeResult, @"Should be able to remove temp file");
         }
         
-        [uploadTempFilename release];
         uploadTempFilename = nil;
     }
 }

@@ -41,7 +41,7 @@ extern NSString *const LFSiteReachabilityConnectionTypeWWAN;
 
 @interface LFSiteReachability : NSObject
 {
-    id<LFSiteReachabilityDelegate> delegate;    
+    id<LFSiteReachabilityDelegate> __unsafe_unretained delegate;    
     NSURL *siteURL;
     SCNetworkReachabilityRef reachability;
     LFHTTPRequest *siteRequest;
@@ -65,8 +65,8 @@ extern NSString *const LFSiteReachabilityConnectionTypeWWAN;
 - (NSURL*)siteURL;
 - (NSTimeInterval)timeoutInterval;
 #else
-@property (assign, nonatomic) id<LFSiteReachabilityDelegate> delegate;
-@property (retain, nonatomic) NSURL *siteURL;
+@property (unsafe_unretained, nonatomic) id<LFSiteReachabilityDelegate> delegate;
+@property (strong, nonatomic) NSURL *siteURL;
 @property (nonatomic) NSTimeInterval timeoutInterval;
 #endif
 @end

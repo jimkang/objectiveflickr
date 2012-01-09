@@ -51,7 +51,6 @@ extern NSString *const LFHTTPRequestPOSTMethod;
 
     NSDictionary *_requestHeader;
 
-    NSMutableData *_receivedData;
     NSString *_receivedContentType;
 
     CFReadStreamRef _readStream;
@@ -115,14 +114,18 @@ extern NSString *const LFHTTPRequestPOSTMethod;
 @property (assign) NSTimeInterval timeoutInterval;
 @property (copy) NSString *userAgent;
 @property (copy) NSString *contentType;
-@property (readonly) NSData *receivedData;
 @property (readonly) NSUInteger expectedDataLength;
-@property (assign) id delegate;
-@property (retain) id sessionInfo;
+@property (unsafe_unretained) id delegate;
+@property (strong) id sessionInfo;
 @property (assign) BOOL shouldWaitUntilDone;
 @property (readonly) BOOL isRunning;
+@property (strong) NSMutableData *receivedData;
+
 
 #else
+
+// TODO: Delete these methods.
+the compiler will never hit this in our projects.
 
 - (NSDictionary *)requestHeader;
 - (void)setRequestHeader:(NSDictionary *)requestHeader;

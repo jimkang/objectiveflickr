@@ -79,13 +79,11 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
     if (_receivedDataTracker) {
         [_receivedDataTracker invalidate];
-        [_receivedDataTracker release];
         _receivedDataTracker = nil;
     }
 
     if (_requestMessageBodyTracker) {
         [_requestMessageBodyTracker invalidate];
-        [_requestMessageBodyTracker release];
         _requestMessageBodyTracker = nil;
     }
 
@@ -102,17 +100,10 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 - (void)dealloc
 {
     [self cleanUp];
-    [_userAgent release];
-    [_contentType release];
-    [_requestHeader release];
-    [_receivedData release];
-    [_receivedContentType release];
 
-    [_sessionInfo release];
     _sessionInfo = nil;
 
     free(_readBuffer);
-    [super dealloc];
 }
 
 - (void)finalize
@@ -218,7 +209,6 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
         // stops _requestMessageBodyTracker
         [_requestMessageBodyTracker invalidate];
-        [_requestMessageBodyTracker release];
         _requestMessageBodyTracker = nil;
 
         NSUInteger statusCode = 0;
@@ -245,7 +235,6 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
                 CFRelease(contentLengthString);
             }
 
-            [_receivedContentType release];
             _receivedContentType = nil;
 
             CFStringRef contentTypeString = CFHTTPMessageCopyHeaderFieldValue(response, CFSTR("Content-Type"));
@@ -307,8 +296,8 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
         }
         else {
-            [_receivedData appendBytes:_readBuffer length:bytesRead];
-            _lastReceivedBytes = [_receivedData length];
+            [self.receivedData appendBytes:_readBuffer length:bytesRead];
+            _lastReceivedBytes = [self.receivedData length];
             _lastReceivedDataUpdateTime = [NSDate timeIntervalSinceReferenceDate];
 
             if ([_delegate respondsToSelector:@selector(httpRequest:receivedBytes:expectedTotal:)]) {
@@ -326,14 +315,13 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
     }
 
 	// if no byte read, we need to present the header at least again, because readStreamHasBytesAvailable is never called
-	if (![_receivedData length] && ![_delegate respondsToSelector:@selector(httpRequest:writeReceivedBytes:size:expectedTotal:)]) {
+	if (![self.receivedData length] && ![_delegate respondsToSelector:@selector(httpRequest:writeReceivedBytes:size:expectedTotal:)]) {
 		if ([_delegate respondsToSelector:@selector(httpRequest:sentBytes:total:)]) {
 			[_delegate httpRequest:self sentBytes:_lastSentBytes total:_lastSentBytes];
 		}
 
 		// stops _requestMessageBodyTracker
 		[_requestMessageBodyTracker invalidate];
-		[_requestMessageBodyTracker release];
 		_requestMessageBodyTracker = nil;
 
 		NSUInteger statusCode = 0;
@@ -360,7 +348,6 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 				CFRelease(contentLengthString);
 			}
 
-			[_receivedContentType release];
 			_receivedContentType = nil;
 
 			CFStringRef contentTypeString = CFHTTPMessageCopyHeaderFieldValue(response, CFSTR("Content-Type"));
@@ -406,12 +393,15 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 @end
 
 @implementation LFHTTPRequest
+
+@synthesize receivedData;
+
 - (id)init
 {
     if ((self = [super init])) {
         _timeoutInterval = LFHTTPRequestDefaultTimeoutInterval;
 
-        _receivedData = [NSMutableData new];
+        self.receivedData = [NSMutableData new];
         _expectedDataLength = NSUIntegerMax;
         _readBufferSize = LFHTTPRequestDefaultReadBufferSize;
         _readBuffer = calloc(1, _readBufferSize);
@@ -478,7 +468,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
     NSEnumerator *dictEnumerator = [headerDictionary keyEnumerator];
     id key;
     while ((key = [dictEnumerator nextObject])) {
-        CFHTTPMessageSetHeaderFieldValue(request, (CFStringRef)[key description], (CFStringRef)[headerDictionary objectForKey:key]);
+        CFHTTPMessageSetHeaderFieldValue(request, (__bridge CFStringRef)[key description], (__bridge CFStringRef)[headerDictionary objectForKey:key]);
     }
 
     if (!inputStream && data) {
@@ -515,7 +505,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
     CFStreamClientContext streamContext;
     streamContext.version = 0;
-    streamContext.info = self;
+    streamContext.info = (__bridge void *)(self);
     streamContext.retain = 0;
     streamContext.release = 0;
     streamContext.copyDescription = 0;
@@ -530,10 +520,8 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
     }
 
     // detach and release the previous data buffer
-    if ([_receivedData length]) {
-        NSMutableData *tmp = _receivedData;
-        _receivedData = [NSMutableData new];
-        [tmp release];
+    if ([self.receivedData length]) {
+        self.receivedData = [NSMutableData new];
     }
 
     CFReadStreamScheduleWithRunLoop(tmpReadStream, CFRunLoopGetCurrent(), kCFRunLoopCommonModes);
@@ -585,7 +573,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 		BOOL isReentrant = (_synchronousMessagePort != nil);
 		
 		if (!isReentrant) {
-			_synchronousMessagePort = (NSMessagePort *)[[NSPort port] retain];
+			_synchronousMessagePort = (NSMessagePort *)[NSPort port];
 			[currentRunLoop addPort:_synchronousMessagePort forMode:currentMode];
 		}
 		
@@ -595,7 +583,6 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 		
 		if (!isReentrant) {
 			[currentRunLoop removePort:_synchronousMessagePort forMode:currentMode];
-			[_synchronousMessagePort release];
 			_synchronousMessagePort = nil;
 		}
 		else {
@@ -634,24 +621,21 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 }
 - (NSData *)getReceivedDataAndDetachFromRequest
 {
-    NSData *returnedData = [_receivedData autorelease];
-    _receivedData = [NSMutableData new];
+    NSData *returnedData = self.receivedData;
+    self.receivedData = [NSMutableData new];
 
-    [_receivedContentType release];
     _receivedContentType = nil;
 
     return returnedData;
 }
 - (NSDictionary *)requestHeader
 {
-    return [[_requestHeader copy] autorelease];
+    return [_requestHeader copy];
 }
 - (void)setRequestHeader:(NSDictionary *)requestHeader
 {
     if (![_requestHeader isEqualToDictionary:requestHeader]) {
-        NSDictionary *tmp = _requestHeader;
-        _requestHeader = [requestHeader copy];
-        [tmp release];
+        self.requestHeader = [requestHeader copy];
     }
 }
 - (NSTimeInterval)timeoutInterval
@@ -666,7 +650,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 }
 - (NSString *)userAgent
 {
-    return [[_userAgent copy] autorelease];
+    return [_userAgent copy];
 }
 - (void)setUserAgent:(NSString *)userAgent
 {
@@ -674,13 +658,11 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
         return;
     }
 
-    NSString *tmp = _userAgent;
-    _userAgent = [userAgent copy];
-    [tmp release];
+    self.userAgent = [userAgent copy];
 }
 - (NSString *)contentType
 {
-    return [[_contentType copy] autorelease];
+    return [_contentType copy];
 }
 - (void)setContentType:(NSString *)contentType
 {
@@ -688,18 +670,12 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
         return;
     }
 
-    NSString *tmp = _contentType;
     _contentType = [contentType copy];
-    [tmp release];
-}
-- (NSData *)receivedData
-{
-    return [[_receivedData retain] autorelease];
 }
 
 - (NSString *)receivedContentType
 {
-	return [[_receivedContentType copy] autorelease];
+	return [_receivedContentType copy];
 }
 
 - (NSUInteger)expectedDataLength
@@ -719,13 +695,11 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
 - (void)setSessionInfo:(id)aSessionInfo
 {
-    id tmp = _sessionInfo;
-    _sessionInfo = [aSessionInfo retain];
-    [tmp release];
+    _sessionInfo = aSessionInfo;
 }
 - (id)sessionInfo
 {
-    return [[_sessionInfo retain] autorelease];
+    return _sessionInfo;
 }
 
 - (size_t)readBufferSize
