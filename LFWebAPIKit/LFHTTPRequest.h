@@ -100,7 +100,6 @@ extern NSString *const LFHTTPRequestPOSTMethod;
 
 - (NSTimeInterval)timeoutInterval;
 - (void)setTimeoutInterval:(NSTimeInterval)timeoutInterval;
-- (NSData *)receivedData;
 - (NSString *)receivedContentType;
 #if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4
 - (NSUInteger)expectedDataLength;
