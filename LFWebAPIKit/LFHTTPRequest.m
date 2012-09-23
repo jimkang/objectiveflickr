@@ -269,7 +269,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
         // now we fire _receivedDataTracker
         _receivedDataTracker = [[NSTimer alloc] initWithFireDate:[NSDate date] interval:LFHTTPRequestDefaultTrackerFireInterval target:self selector:@selector(handleReceivedDataTrackerTick:) userInfo:nil repeats:YES];
-        #if MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4
+        #if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4
                 // this is 10.5 only
                 [[NSRunLoop currentRunLoop] addTimer:_receivedDataTracker forMode:NSRunLoopCommonModes];
         #endif
@@ -447,7 +447,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
 
     if (inputStream) {
         if (byteStreamSize && byteStreamSize != NSUIntegerMax) {
-            [headerDictionary setObject:[NSString stringWithFormat:@"%lu", byteStreamSize] forKey:@"Content-Length"];
+            [headerDictionary setObject:[NSString stringWithFormat:@"%ju", (uintmax_t)byteStreamSize] forKey:@"Content-Length"];
             _requestMessageBodySize = byteStreamSize;
         }
         else {
@@ -456,7 +456,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
     }
     else {
         if ([data length]) {
-            [headerDictionary setObject:[NSString stringWithFormat:@"%lu", [data length]] forKey:@"Content-Length"];
+            [headerDictionary setObject:[NSString stringWithFormat:@"%ju", (uintmax_t)[data length]] forKey:@"Content-Length"];
         }
         _requestMessageBodySize = [data length];
     }
@@ -547,7 +547,7 @@ void LFHRReadStreamClientCallBack(CFReadStreamRef stream, CFStreamEventType even
     // we create _requestMessageBodyTracker (timer for tracking sent data) first
     _requestMessageBodyTracker = [[NSTimer alloc] initWithFireDate:[NSDate date] interval:LFHTTPRequestDefaultTrackerFireInterval target:self selector:@selector(handleRequestMessageBodyTrackerTick:) userInfo:nil repeats:YES];
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4
+#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4
     // this is 10.5 only
     [[NSRunLoop currentRunLoop] addTimer:_requestMessageBodyTracker forMode:NSRunLoopCommonModes];
 #endif

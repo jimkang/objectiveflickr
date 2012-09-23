@@ -68,7 +68,7 @@ NSString *OFEscapedURLStringFromNSStringWithExtraEscapedChars(NSString *inStr, N
 #endif    
 }
 
-NSString *OFGenerateUUIDString()
+NSString *OFGenerateUUIDString(void)
 {
     CFUUIDRef uuid = CFUUIDCreate(NULL);
     NSString *uuidStr = 
