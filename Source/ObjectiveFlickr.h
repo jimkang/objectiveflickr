@@ -156,17 +156,10 @@ typedef id OFFlickrAPIRequestDelegateType;
 // image upload—we use NSInputStream here because we want to have flexibity; with this you can upload either a file or NSData from NSImage
 - (BOOL)uploadImageStream:(NSInputStream *)inImageStream suggestedFilename:(NSString *)inFilename MIMEType:(NSString *)inType arguments:(NSDictionary *)inArguments;
 
-<<<<<<< HEAD
 #if MAC_OS_X_VERSION_MIN_REQUIRED > MAC_OS_X_VERSION_10_4
 @property (unsafe_unretained, nonatomic, readonly) OFFlickrAPIContext *context;
 @property (nonatomic, unsafe_unretained) OFFlickrAPIRequestDelegateType delegate;
 @property (nonatomic, strong) id sessionInfo;
-=======
-#if MAC_OS_X_VERSION_MAX_ALLOWED > MAC_OS_X_VERSION_10_4
-@property (nonatomic, readonly) OFFlickrAPIContext *context;
-@property (nonatomic, assign) OFFlickrAPIRequestDelegateType delegate;
-@property (nonatomic, retain) id sessionInfo;
->>>>>>> f474a78c807b5fa0c887bf8efaead5be1da637ec
 @property (nonatomic, assign) NSTimeInterval requestTimeoutInterval;
 #else
 
